@@ -42,12 +42,9 @@ def chat_client():
                     sys.exit()
                 else :
                     #print data
-                    try:
-                        msg = json.loads(data)
-                    except:
-                        continue
-                    sys.stdout.write(msg['sender']+' :'+msg['msg'])
-                    sys.stdout.write('[Me] '); sys.stdout.flush()     
+                    msg = json.loads(data)
+                    sys.stdout.write('\r'+msg['sender']+' :'+msg['msg'])
+                    sys.stdout.write('Me: '); sys.stdout.flush()     
             
             else :
                 # user entered a message
@@ -56,9 +53,9 @@ def chat_client():
                 msg_dict['type'] = 'broadcast'
                 msg_dict['msg'] = msg
                 s.send(json.dumps(msg_dict))
-                sys.stdout.write('[Me] '); sys.stdout.flush() 
-
-if __name__ == "__main__":
-
-    sys.exit(chat_client())
+                sys.stdout.write('Me: '); sys.stdout.flush()
+try:
+    chat_client()
+except KeyboardInterrupt:
+    sys.exit(0)
 

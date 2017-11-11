@@ -9,13 +9,15 @@ HOST = ''
 SOCKET_LIST = []
 RECV_BUFFER = 4096 
 PORT = 9009
-users = {'jaya':'aditya','animesh':'ramesh', 'puneet':'verma'}
 threads = []
+unsent = {}
+block_list = {}
 user_sock_dict = {}
 sock_user_dict = {}
 block_dict = {}
 authenticated = {}
 passwd = {}
+threads = []
 
 def chat_server():
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -50,6 +52,7 @@ def chat_server():
                         # there is something in the socket
                         t = threading.Thread(target=parse, args=(data, sock, server_socket))
                         t.start()
+                        threads.append(t)
                     else:
                         # remove the socket that's broken    
                         if sock in SOCKET_LIST:
@@ -101,6 +104,8 @@ def parse(data, sock, server_socket):
         print authenticated
         print "not auth"
         return
+    msg_dict = {}
+    msg_dict["type"] = type_msg
     if type_msg == "broadcast":
         print "broadcast start"
         msg_dict = {}
@@ -114,6 +119,20 @@ def parse(data, sock, server_socket):
         message = json.dumps(msg_dict)
         print message
         broadcast(server_socket, sock, message)
+    elif type_msg == "private":
+        try:
+            reciever = data_dict["reciever"]
+            msg_dict["msg"] = data_dict["msg"]
+        except:
+            return
+        msg_dict["sender"] = sock_user_dict[str(sock.getpeername())]
+        private(reciever, msg_dict)
+    elif type_msg == "block":
+        try:
+            user = data_dict["user"]
+        except:
+            return
+        block_list[sock_user_dict[str(sock.getpeername())]].append(user)
 
 def auth(username, password, sock):
     try:
@@ -122,8 +141,9 @@ def auth(username, password, sock):
             user_sock_dict[username] = sock
             sock_user_dict[str(sock.getpeername())] = username
             authenticated[str(sock.getpeername())] = True
-            print authenticated
-            sock_user_dict[str(sock.getpeername())] = username
+            for x in unsent[username]:
+                safe_send(sock, x)
+            unsent[username] = []
             print "auth successful - %s" %username
         else:
             print "wrong password"
@@ -138,19 +158,20 @@ def auth(username, password, sock):
         message['sender'] = 'Server'
         message['code'] = 404
         message["msg"] = "User does not exist"
-        safe_send(sock,json.dumps(message))
 
 
 def safe_send(sock, msg):
     try:
         sock.send(msg)
+        return 0
     except:
         try:
             SOCKET_LIST.remove(sock)
         except:
             print "sock already removed"
+        return 1
 
-def private(sock, reciever, msg_dict):
+def private(reciever, msg_dict):
     try:
         if msg_dict["sender"] in block_dict[reciever]:
             message = {}
@@ -160,7 +181,10 @@ def private(sock, reciever, msg_dict):
             message["msg"] = "User has blocked you"
             safe_send(sock, json.dumps(message))
         else:
-            safe_send(user_sock_dict[reciever], json.dumps(msg_dict))
+            msg = json.dumps(msg_dict)
+            status = safe_send(user_sock_dict[reciever], msg)
+            if status == 1:
+                unsent['reciever'].append(msg)
     except KeyError:
         message = {}
         message["type"] = "ERROR"
@@ -168,6 +192,14 @@ def private(sock, reciever, msg_dict):
         message['code'] = 404
         message["msg"] = "User does not exist"
         safe_send(sock,json.dumps(message))
+
 with open('passwd.json' , 'r') as f:
     passwd = json.load(f)
-chat_server()
+for x in passwd.keys():
+    unsent[x] = []
+try:
+    chat_server()
+except KeyboardInterrupt:
+    for t in threads:
+        t.join()
+    sys.exit(0)
