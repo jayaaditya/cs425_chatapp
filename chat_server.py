@@ -126,7 +126,7 @@ def parse(data, sock, server_socket):
         except:
             return
         msg_dict["sender"] = sock_user_dict[str(sock.getpeername())]
-        private(reciever, msg_dict)
+        private(reciever, msg_dict, sock)
     elif type_msg == "block":
         try:
             user = data_dict["user"]
@@ -171,7 +171,7 @@ def safe_send(sock, msg):
             print "sock already removed"
         return 1
 
-def private(reciever, msg_dict):
+def private(reciever, msg_dict, sock):
     try:
         if msg_dict["sender"] in block_dict[reciever]:
             message = {}
