@@ -18,6 +18,7 @@ block_dict = {}
 authenticated = {}
 passwd = {}
 threads = []
+error_messages = {404:{'type':'private','sender':'ERROR', 'msg':'User does not exist'}}
 
 def chat_server():
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -126,7 +127,7 @@ def parse(data, sock, server_socket):
         except:
             return
         msg_dict["sender"] = sock_user_dict[str(sock.getpeername())]
-        private(reciever, msg_dict)
+        private(reciever, msg_dict, sock)
     elif type_msg == "block":
         try:
             user = data_dict["user"]
@@ -136,6 +137,7 @@ def parse(data, sock, server_socket):
 
 def auth(username, password, sock):
     try:
+        print [username]
         print passwd[username], hashlib.sha224(username+password).hexdigest()
         if passwd[username] == hashlib.sha224(username+password).hexdigest():
             user_sock_dict[username] = sock
@@ -159,7 +161,6 @@ def auth(username, password, sock):
         message['code'] = 404
         message["msg"] = "User does not exist"
 
-
 def safe_send(sock, msg):
     try:
         sock.send(msg)
@@ -171,32 +172,24 @@ def safe_send(sock, msg):
             print "sock already removed"
         return 1
 
-def private(reciever, msg_dict):
+def private(reciever, msg_dict, sock):
+    print passwd.keys(), reciever
+    if reciever not in passwd.keys():
+        safe_send(sock, json.dumps(error_messages[404]))
+        return
+    msg = json.dumps(msg_dict)
     try:
-        if msg_dict["sender"] in block_dict[reciever]:
-            message = {}
-            message["type"] = "ERROR"
-            message['sender'] = 'Server'
-            message['code'] = 401
-            message["msg"] = "User has blocked you"
-            safe_send(sock, json.dumps(message))
-        else:
-            msg = json.dumps(msg_dict)
-            status = safe_send(user_sock_dict[reciever], msg)
-            if status == 1:
-                unsent['reciever'].append(msg)
+        status = safe_send(user_sock_dict[reciever], msg)
+        if status == 1:
+            unsent[reciever].append(msg)
     except KeyError:
-        message = {}
-        message["type"] = "ERROR"
-        message['sender'] = 'Server'
-        message['code'] = 404
-        message["msg"] = "User does not exist"
-        safe_send(sock,json.dumps(message))
+        unsent[reciever].append(msg)
 
 with open('passwd.json' , 'r') as f:
     passwd = json.load(f)
 for x in passwd.keys():
     unsent[x] = []
+    block_list[x] = []
 try:
     chat_server()
 except KeyboardInterrupt:
