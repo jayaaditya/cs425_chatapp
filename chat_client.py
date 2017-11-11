@@ -6,8 +6,9 @@ window_state = {'type':'broadcast','sender':'Server'}
 chat_log = {'Server':[]}
 
 def print_msg(msg):
-    sys.stdout.write('\r'+msg['sender']+' :'+msg['msg'])
-    sys.stdout.write('Me: '); sys.stdout.flush()
+    sys.stdout.write('\r'+'['+window_state['type']+'] '+msg['sender']+' :'+msg['msg'])
+    greet = '\r[' + window_state['type'] + ']' + ' Me: '
+    sys.stdout.write(greet); sys.stdout.flush()
 
 def chat_client():
     if(len(sys.argv) < 3) :
@@ -32,7 +33,7 @@ def chat_client():
         sys.exit()
     s.send(json.dumps(msg_dict))
     print 'Connected to remote host. You can start sending messages'
-    sys.stdout.write('[Me] '); sys.stdout.flush()
+    sys.stdout.write('Me: '); sys.stdout.flush()
     while 1:
         socket_list = [sys.stdin, s]
         # Get the list sockets which are readable
@@ -54,7 +55,7 @@ def chat_client():
                             chat_log[msg['sender']].append(msg)
                         else:      
                             chat_log[msg['sender']] = [msg]
-                    if window_state['type'] == 'private' and window_state['sender'] == msg['sender']:
+                    if window_state['type'] == 'private' and (window_state['sender'] == msg['sender'] or msg['sender'] == "ERROR"):
                         print_msg(msg)
                     if window_state['type'] == 'broadcast' and msg['type'] == 'broadcast':
                         print_msg(msg)
@@ -65,7 +66,7 @@ def chat_client():
                     window_state['type'] = 'private'
                     window_state['sender'] = 'none'
                     for x in chat_log.keys():
-                        if x != 'Server':
+                        if x != 'Server' and x != 'ERROR':
                             print x
                     sys.stdout.write('Enter Username: '); sys.stdout.flush()
                 elif msg.strip() == '/broadcast':
@@ -73,7 +74,8 @@ def chat_client():
                     window_state['sender'] = 'Server'
                     for x in chat_log['Server']:
                         print_msg(x)
-                    sys.stdout.write('\rMe: '); sys.stdout.flush()
+                        greet = '\r[' + window_state['type'] + ']' + ' Me: '
+                    sys.stdout.write(greet); sys.stdout.flush()
                 elif window_state['type'] == 'private' and window_state['sender'] == 'none':
                     user = msg.strip()
                     window_state['sender'] = user
@@ -83,7 +85,8 @@ def chat_client():
                     else:
                         chat_log[user] = []
                         print "New thread"
-                    sys.stdout.write('\rMe: '); sys.stdout.flush()
+                    greet = '\r[' + window_state['type'] + ']' + ' Me: '
+                    sys.stdout.write(greet); sys.stdout.flush()
                 else:
                     msg_dict = {}
                     msg_dict['type'] = window_state['type']
@@ -92,7 +95,8 @@ def chat_client():
                     s.send(json.dumps(msg_dict))
                     msg_dict['sender'] = 'Me'
                     chat_log[msg_dict['reciever']].append(msg_dict)
-                    sys.stdout.write('Me: '); sys.stdout.flush()
+                    greet = '\r[' + window_state['type'] + ']' + ' Me: '
+                    sys.stdout.write(greet); sys.stdout.flush()
 try:
     chat_client()
 except KeyboardInterrupt:
