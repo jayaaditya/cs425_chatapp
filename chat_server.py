@@ -19,8 +19,8 @@ authenticated = {}
 passwd = {}
 threads = []
 error_messages = {
-        404:{'type':'private','sender':'ERROR', 'msg':'User does not exist'},
-        400:{'type':'private','sender':'ERROR', 'msg':'Username/password incorrect'}
+        404:{'type':'private','sender':'ERROR', 'msg':'User does not exist\n'},
+        400:{'type':'private','sender':'ERROR', 'msg':'Username/password incorrect\n'}
         }
 broad_mess = []
 priv_mess = {}
@@ -146,7 +146,9 @@ def parse(data, sock, server_socket):
             msg_dict["msg"] = data_dict["msg"]
         except:
             return
-        msg_dict["sender"] = sock_user_dict[str(sock.getpeername())]
+        sender = sock_user_dict[str(sock.getpeername())]
+        msg_dict["sender"] = sender
+        priv_mess[sender].append(data)
         private(reciever, msg_dict, sock)
     elif type_msg == "block":
         try:

@@ -71,10 +71,16 @@ def chat_client():
                 if msg['type'] == 'broadcast':
                     chat_log['Server'].append(msg)
                 if msg['type'] == 'private':
-                    if chat_log.has_key(msg['sender']):
-                        chat_log[msg['sender']].append(msg)
-                    else:   
-                        chat_log[msg['sender']] = [msg]
+                    if msg.has_key('reciever'):
+                        if chat_log.has_key(msg['reciever']):
+                            chat_log[msg['reciever']].append(msg)
+                        else:   
+                            chat_log[msg['reciever']] = [msg]
+                    else:
+                        if chat_log.has_key(msg['sender']):
+                            chat_log[msg['sender']].append(msg)
+                        else:   
+                            chat_log[msg['sender']] = [msg]
                 if window_state['type'] == 'private' and (window_state['sender'] == msg['sender'] or msg['sender'] == "ERROR"):
                     print_msg(msg)
                 if window_state['type'] == 'broadcast' and msg['type'] == 'broadcast':
@@ -128,8 +134,8 @@ def chat_client():
                     msg_dict['type'] = window_state['type']
                     msg_dict['reciever'] = window_state['sender']
                     msg_dict['msg'] = msg
+                    msg_dict['sender'] = username
                     s.send(json.dumps(msg_dict))
-                    msg_dict['sender'] = 'Me'
                     chat_log[msg_dict['reciever']].append(msg_dict)
                     greet = '\r[' + window_state['type'] + ']' + ' Me: '
                     sys.stdout.write(greet); sys.stdout.flush()
