@@ -2,10 +2,13 @@
 import json
 import sys, socket, select
 
+username = "me"
 window_state = {'type':'broadcast','sender':'Server'}
 chat_log = {'Server':[]}
 
 def print_msg(msg):
+    if msg['sender'] == username:
+        msg['sender'] = 'Me'
     sys.stdout.write('\r'+'['+window_state['type']+'] '+msg['sender']+' :'+msg['msg'])
     greet = '\r[' + window_state['type'] + ']' + ' Me: '
     sys.stdout.write(greet); sys.stdout.flush()
@@ -33,7 +36,8 @@ def chat_client():
         sys.exit()
     s.send(json.dumps(msg_dict))
     print 'Connected to remote host. You can start sending messages'
-    sys.stdout.write('Me: '); sys.stdout.flush()
+    greet = '\r[' + window_state['type'] + ']' + ' Me: '
+    sys.stdout.write(greet); sys.stdout.flush()
     while 1:
         socket_list = [sys.stdin, s]
         # Get the list sockets which are readable
@@ -96,6 +100,14 @@ def chat_client():
                     except:
                         continue
                     s.send(json.dumps({'type':'block','user':user}))
+                    greet = '\r[' + window_state['type'] + ']' + ' Me: '
+                    sys.stdout.write(greet); sys.stdout.flush()
+                elif msg.startswith("/unblock "):
+                    try:  
+                        user = msg.split('/unblock ')[1].strip() 
+                    except:
+                        continue
+                    s.send(json.dumps({'type':'unblock','user':user}))
                     greet = '\r[' + window_state['type'] + ']' + ' Me: '
                     sys.stdout.write(greet); sys.stdout.flush()
                 else:

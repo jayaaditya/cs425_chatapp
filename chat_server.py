@@ -103,7 +103,7 @@ def parse(data, sock, server_socket):
             print "login format wrong"
             return
         auth(username, password, sock)
-    if not authenticated[str(sock.getpeername())]:
+    elif not authenticated[str(sock.getpeername())]:
         print authenticated
         print "not auth"
         return
@@ -137,6 +137,15 @@ def parse(data, sock, server_socket):
         except:
             return
         block_list[sock_user_dict[str(sock.getpeername())]].append(user)
+    elif type_msg == "unblock":
+        try:
+            user = data_dict["user"]
+        except:
+            return
+        try:
+            block_list[sock_user_dict[str(sock.getpeername())]].remove(user)
+        except:
+            pass
 
 def auth(username, password, sock):
     try:
@@ -164,11 +173,8 @@ def auth(username, password, sock):
             except:
                 pass
     except KeyError:
-        message = {}
-        message["type"] = "private"
-        message['sender'] = 'ERROR'
-        message['code'] = 404
-        message["msg"] = "User does not exist"
+        sock.close()
+        SOCKET_LIST.remove(sock)
 
 def safe_send(sock, msg):
     try:
