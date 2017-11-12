@@ -18,7 +18,10 @@ sock_user_dict = {}
 authenticated = {}
 passwd = {}
 threads = []
-error_messages = {404:{'type':'private','sender':'ERROR', 'msg':'User does not exist'}}
+error_messages = {
+        404:{'type':'private','sender':'ERROR', 'msg':'User does not exist'},
+        400:{'type':'private','sender':'ERROR', 'msg':'Username/password incorrect'}
+        }
 broad_mess = []
 priv_mess = {}
 def chat_server():
@@ -95,7 +98,18 @@ def parse(data, sock, server_socket):
     except:
         print "type missing"
         return
-    if type_msg == 'auth':
+    if type_msg == 'signup':
+        try:
+            username =  str(data_dict['username'])
+            password = str(data_dict['password'])
+        except:
+            print "signup format wrong"
+            return
+        if not passwd.has_key(username):
+            passwd[username] = hashlib.sha224(username+password).hexdigest()
+            priv_mess[username] = []
+        auth(username, password, sock)
+    elif type_msg == 'auth':
         try:
             username =  str(data_dict['username'])
             password = str(data_dict['password'])
@@ -149,7 +163,6 @@ def parse(data, sock, server_socket):
 
 def auth(username, password, sock):
     try:
-        print [username]
         print passwd[username], hashlib.sha224(username+password).hexdigest()
         if passwd[username] == hashlib.sha224(username+password).hexdigest():
             user_sock_dict[username] = sock
@@ -173,8 +186,15 @@ def auth(username, password, sock):
             except:
                 pass
     except KeyError:
-        sock.close()
-        SOCKET_LIST.remove(sock)
+        print "acc does not exist"
+        if sock in SOCKET_LIST:
+            SOCKET_LIST.remove(sock)
+        safe_send(sock, json.dumps(error_messages[400]))
+        time.sleep(1)
+        try:
+            sock.close()
+        except:
+            pass
 
 def safe_send(sock, msg):
     try:
@@ -210,4 +230,7 @@ try:
 except KeyboardInterrupt:
     for t in threads:
         t.join()
+    with open('passwd.json', 'w') as f:
+        js = json.dumps(passwd)
+        f.write(js)
     sys.exit(0)

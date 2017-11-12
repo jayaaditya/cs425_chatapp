@@ -1,7 +1,7 @@
 # chat_client.py
 import json
 import sys, socket, select
-
+import time
 username = "me"
 window_state = {'type':'broadcast','sender':'Server'}
 chat_log = {'Server':[]}
@@ -14,6 +14,7 @@ def print_msg(msg):
     sys.stdout.write(greet); sys.stdout.flush()
 
 def chat_client():
+    global username
     if(len(sys.argv) < 3) :
         print 'Usage : python chat_client.py hostname port'
         sys.exit()
@@ -23,16 +24,28 @@ def chat_client():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.settimeout(2)
     # connect to remote host
+    try :
+        s.connect((host, port))
+    except :
+        print 'Unable to connect'
+        sys.exit()
+    greet_str = """
+Select: 1 - Sign Up
+        2 - Sign In
+        choice: """
+    choice = int(raw_input(greet_str).strip())
     username = raw_input("Enter username :")
     password = raw_input("Enter password :")
     msg_dict = {}
     msg_dict['username'] = username
     msg_dict['password'] = password
-    msg_dict['type'] = 'auth'
-    try :
-        s.connect((host, port))
-    except :
-        print 'Unable to connect'
+    if choice == 1:
+        msg_dict["type"] = 'signup'
+    elif choice == 2:
+        msg_dict['type'] = 'auth'
+    else:
+        print choice
+        print "hey!"
         sys.exit()
     s.send(json.dumps(msg_dict))
     print 'Connected to remote host. You can start sending messages'
@@ -48,6 +61,7 @@ def chat_client():
                 data = sock.recv(4096)
                 if not data :
                     print '\nDisconnected from chat server'
+                    s.close()
                     sys.exit()
                 else :
                     #print data
