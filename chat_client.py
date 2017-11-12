@@ -87,6 +87,14 @@ def chat_client():
                         print "New thread"
                     greet = '\r[' + window_state['type'] + ']' + ' Me: '
                     sys.stdout.write(greet); sys.stdout.flush()
+                elif msg.startswith("/block "):
+                    try:  
+                        user = msg.split('/block ')[1].strip() 
+                    except:
+                        continue
+                    s.send(json.dumps({'type':'block','user':user}))
+                    greet = '\r[' + window_state['type'] + ']' + ' Me: '
+                    sys.stdout.write(greet); sys.stdout.flush()
                 else:
                     msg_dict = {}
                     msg_dict['type'] = window_state['type']

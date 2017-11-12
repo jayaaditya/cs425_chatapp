@@ -14,7 +14,6 @@ unsent = {}
 block_list = {}
 user_sock_dict = {}
 sock_user_dict = {}
-block_dict = {}
 authenticated = {}
 passwd = {}
 threads = []
@@ -72,7 +71,8 @@ def broadcast(server_socket, sock, message):
     print "f_call"
     for socket in SOCKET_LIST:
         # send the message only to peer
-        if socket != server_socket and socket != sock :
+        if (socket != server_socket and socket != sock and sock_user_dict[str(sock.getpeername())] 
+            not in block_list[sock_user_dict[str(socket.getpeername())]]):
             try :
                 socket.send(message)
             except :
@@ -176,6 +176,8 @@ def private(reciever, msg_dict, sock):
     print passwd.keys(), reciever
     if reciever not in passwd.keys():
         safe_send(sock, json.dumps(error_messages[404]))
+        return
+    if sock_user_dict[str(sock.getpeername())] in block_list[reciever]:
         return
     msg = json.dumps(msg_dict)
     try:
