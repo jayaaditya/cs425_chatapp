@@ -29,8 +29,7 @@ def chat_client():
     except :
         print 'Unable to connect'
         sys.exit()
-    greet_str = """
-Select: 1 - Sign Up
+    greet_str = """Select: 1 - Sign Up
         2 - Sign In
         choice: """
     choice = int(raw_input(greet_str).strip())

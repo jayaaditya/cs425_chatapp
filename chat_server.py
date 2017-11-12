@@ -76,16 +76,18 @@ def broadcast(server_socket, sock, message):
     print "f_call"
     for socket in SOCKET_LIST:
         # send the message only to peer
-        if (socket != server_socket and socket != sock and sock_user_dict[str(sock.getpeername())] 
-            not in block_list[sock_user_dict[str(socket.getpeername())]]):
-            try :
-                socket.send(message)
-            except :
-                # broken socket connection
-                socket.close()
-                # broken socket, remove it
-                if socket in SOCKET_LIST:
-                    SOCKET_LIST.remove(socket)
+        try:
+            if (socket != server_socket and socket != sock and sock_user_dict[str(sock.getpeername())] 
+                    not in block_list[sock_user_dict[str(socket.getpeername())]]):
+                try :
+                    socket.send(message)
+                except :
+                    socket.close()
+                    # broken socket, remove it
+                    if socket in SOCKET_LIST:
+                        SOCKET_LIST.remove(socket)
+        except KeyError:
+            pass
 
 def parse(data, sock, server_socket):
     try:
@@ -107,6 +109,7 @@ def parse(data, sock, server_socket):
             return
         if not passwd.has_key(username):
             passwd[username] = hashlib.sha224(username+password).hexdigest()
+            block_list[username] = []
             priv_mess[username] = []
         auth(username, password, sock)
     elif type_msg == 'auth':
