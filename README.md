@@ -1,9 +1,3 @@
-Bugs/Features to be fixed<br>
-Client:
-* Display of broadcast messages
-* Seperate inteface for private messages
-
-Server:
-* Sending of broadcast messages to unauthenticated clients
-* Sending of private messages
-* Implementing block list
+System Dependencies - Linux, Python 2.7<br>
+* To run server `python chat_server.py`
+* To run client `python chat_client.py <server-ip> 9009`
